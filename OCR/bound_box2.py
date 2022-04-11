@@ -169,15 +169,19 @@ if __name__ == "__main__":
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     img_original = img_gray.copy()
     cv2.imshow("Grayscale", img_gray)
+    cv2.imwrite('Grayscale', img_gray)
 
     img_filtered = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
     cv2.imshow("Threshold", img_filtered)
+    cv2.imwrite('Threshold', img_filtered)
 
     img_filtered = cv2.erode(img_filtered, None, iterations=3)
     cv2.imshow("Eroded", img_filtered)
+    cv2.imwrite('Eroded', img_filtered)
 
     img_filtered = cv2.dilate(img_filtered, None, iterations=3)
     cv2.imshow("Dilated", img_filtered)
+    cv2.imwrite('Dilated', img_filtered)
 
     # Find contours, obtain bounding box, extract and save region of interest (ROI)
     ROI_number = 0
