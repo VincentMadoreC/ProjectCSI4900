@@ -157,7 +157,7 @@ def compare_against_dataset(image):
 
 if __name__ == "__main__":
     # img_path = "./images/402408.png"
-    img_path = "./images/bytr741.png"
+    img_path = "./images/02ra83.jpg"
     if len(sys.argv) > 1:
         img_path = sys.argv[1]
     img = cv2.imread(img_path)

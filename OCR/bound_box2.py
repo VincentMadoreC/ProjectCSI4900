@@ -16,7 +16,8 @@ import sys
 # Settings
 IMAGE_FOLDER = "./images"
 INTENSITY_THRESHOLD = 129
-SCALING = 0.3
+# TODO issue when scaling up
+SCALING = 1
 
 
 def find_limits(image):
@@ -153,10 +154,10 @@ def compare_against_dataset(image):
     print("Best: {} ({})".format(best_mse_index, best_mse))
     return best_mse_index
 
-
+# TODO add a debug flag
 if __name__ == "__main__":
     # img_path = "./images/402408.png"
-    img_path = "./images/cfva648.jpg"
+    img_path = "./images/da12247.jpg"
     if len(sys.argv) > 1:
         img_path = sys.argv[1]
     img = cv2.imread(img_path)
@@ -169,19 +170,19 @@ if __name__ == "__main__":
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     img_original = img_gray.copy()
     cv2.imshow("Grayscale", img_gray)
-    cv2.imwrite('Grayscale', img_gray)
+    # cv2.imwrite('Grayscale.png', img_gray)
 
     img_filtered = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
     cv2.imshow("Threshold", img_filtered)
-    cv2.imwrite('Threshold', img_filtered)
+    # cv2.imwrite('Threshold.png', img_filtered)
 
     img_filtered = cv2.erode(img_filtered, None, iterations=3)
     cv2.imshow("Eroded", img_filtered)
-    cv2.imwrite('Eroded', img_filtered)
+    # cv2.imwrite('Eroded.png', img_filtered)
 
     img_filtered = cv2.dilate(img_filtered, None, iterations=3)
     cv2.imshow("Dilated", img_filtered)
-    cv2.imwrite('Dilated', img_filtered)
+    # cv2.imwrite('Dilated.png', img_filtered)
 
     # Find contours, obtain bounding box, extract and save region of interest (ROI)
     ROI_number = 0
@@ -191,7 +192,7 @@ if __name__ == "__main__":
     img_height, img_width, _ = img.shape
     min_height_ratio = 0.2 # % of the image's height a contour must be to be considered relevant
     max_height_ratio = 0.5
-    min_width_ratio = 0.05 # % of the image's width a contour must be to be considered relevant 
+    min_width_ratio = 0.03 # % of the image's width a contour must be to be considered relevant 
     max_width_ratio = 0.2
 
     # Isolate only relevant characters based on size
@@ -215,6 +216,7 @@ if __name__ == "__main__":
             cv2.imwrite('ROI_{}.png'.format(ROI_number), ROI)
             ROI_number += 1
     cv2.imshow('Bounding boxes', img)
+    # cv2.imwrite('BoundingBoxes.png', img)
 
     # Sort the bounding boxes from left to right
     sorted_characters = sorted(characters, key=lambda x: x[1])
