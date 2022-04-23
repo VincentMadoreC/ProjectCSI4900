@@ -17,7 +17,7 @@ import sys
 IMAGE_FOLDER = "./images"
 INTENSITY_THRESHOLD = 129
 # TODO issue when scaling up
-SCALING = 1
+SCALING = 0.5
 
 
 def find_limits(image):
@@ -157,7 +157,7 @@ def compare_against_dataset(image):
 # TODO add a debug flag
 if __name__ == "__main__":
     # img_path = "./images/402408.png"
-    img_path = "./images/da12247.jpg"
+    img_path = "./images/cfva648.jpg"
     if len(sys.argv) > 1:
         img_path = sys.argv[1]
     img = cv2.imread(img_path)
