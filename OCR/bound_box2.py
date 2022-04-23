@@ -17,7 +17,7 @@ import sys
 IMAGE_FOLDER = "./images"
 INTENSITY_THRESHOLD = 129
 # TODO issue when scaling up
-SCALING = 1
+SCALING = 0.5
 
 
 def find_limits(image):
@@ -125,6 +125,9 @@ def compare_against_dataset(image):
     Store the average MSE for each number.
     Check which number has the best (lowest) MSE on average when compared to the image.
     '''
+    # TODO lower threshold after testing
+    CONFIDENCE_THRESHOLD = 0.2 
+    possibilities = []
     mse_list = []
     path_dataset = IMAGE_FOLDER + "/standard"
     for folder in os.listdir(path_dataset):
@@ -151,13 +154,17 @@ def compare_against_dataset(image):
         if mse < best_mse:
             best_mse = mse
             best_mse_index = folder
+        if mse <= CONFIDENCE_THRESHOLD:
+            possibilities.append((mse, folder))
     print("Best: {} ({})".format(best_mse_index, best_mse))
-    return best_mse_index
+    print("Possibilities: {}".format(possibilities))
+    # return best_mse_index
+    return sorted(possibilities, key=lambda x: x[0])
 
 # TODO add a debug flag
 if __name__ == "__main__":
-    # img_path = "./images/402408.png"
-    img_path = "./images/da12247.jpg"
+    # img_path = "./images/cfva648.jpg"
+    img_path = "./images/cfva648.jpg"
     if len(sys.argv) > 1:
         img_path = sys.argv[1]
     img = cv2.imread(img_path)
@@ -224,10 +231,38 @@ if __name__ == "__main__":
     # print the final result with the highest confidence.
     # TODO make a list of the most likely, rather than only one. 
     final_string = ""
-    for (char, x) in sorted_characters:
-        c = compare_against_dataset(char)
-        final_string = final_string + c
-    print(final_string)
+    # for (char, x) in sorted_characters:
+    #     c = compare_against_dataset(char)
+    #     final_string = final_string + c
+    # print(final_string)
+    possibilities = []
+    for (char, _) in sorted_characters:
+        possibilities.append(compare_against_dataset(char))
+    
+    for char_possibilities in possibilities:
+        print(char_possibilities)
+    
+    NUMBER_OF_RESULTS = 10
+    for i in range(NUMBER_OF_RESULTS):
+        final_string = ''
+        least_best_mse = 0 #TODO
+        for char_possibilities in possibilities:
+            best_mse = 1
+            best_char = '0'
+            for (mse, char) in char_possibilities:
+                if mse < best_mse:
+                    best_mse = mse
+                    best_char = char
+            final_string = final_string + best_char
+            # TODO only remove the lowest of the best (mse, char)
+            if(len(char_possibilities) > 1):
+                char_possibilities.remove((best_mse,best_char))
+
+        print(final_string)
+        # for char_possibilities in possibilities:
+        #     print(char_possibilities)
+
+
     # char_0 = compare_against_dataset(characters[0])
     # cv2.imshow('character', characters[0])
     # print("CHAR0")
