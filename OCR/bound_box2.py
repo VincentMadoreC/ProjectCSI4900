@@ -125,6 +125,9 @@ def compare_against_dataset(image):
     Store the average MSE for each number.
     Check which number has the best (lowest) MSE on average when compared to the image.
     '''
+    # TODO lower threshold after testing
+    CONFIDENCE_THRESHOLD = 0.2 
+    possibilities = []
     mse_list = []
     path_dataset = IMAGE_FOLDER + "/standard"
     for folder in os.listdir(path_dataset):
@@ -151,37 +154,47 @@ def compare_against_dataset(image):
         if mse < best_mse:
             best_mse = mse
             best_mse_index = folder
+        if mse <= CONFIDENCE_THRESHOLD:
+            possibilities.append((mse, folder))
     print("Best: {} ({})".format(best_mse_index, best_mse))
-    return best_mse_index
+    print("Possibilities: {}".format(possibilities))
+    # return best_mse_index
+    return sorted(possibilities, key=lambda x: x[0])
 
 # TODO add a debug flag
 if __name__ == "__main__":
-    # img_path = "./images/402408.png"
+    DEBUG_MODE = False
+    # img_path = "./images/cfva648.jpg"
     img_path = "./images/cfva648.jpg"
     if len(sys.argv) > 1:
         img_path = sys.argv[1]
     img = cv2.imread(img_path)
     img = cv2.resize(img, (0, 0), fx=SCALING, fy=SCALING)
     # img_original = img.copy()
-    cv2.imshow("Original", img)
+    if DEBUG_MODE:
+        cv2.imshow("Original", img)
     
     # Find the contours of the characters
     # https://stackoverflow.com/questions/21104664/extract-all-bounding-boxes-using-opencv-python
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     img_original = img_gray.copy()
-    cv2.imshow("Grayscale", img_gray)
+    if DEBUG_MODE:
+        cv2.imshow("Grayscale", img_gray)
     # cv2.imwrite('Grayscale.png', img_gray)
 
     img_filtered = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
-    cv2.imshow("Threshold", img_filtered)
+    if DEBUG_MODE:
+        cv2.imshow("Threshold", img_filtered)
     # cv2.imwrite('Threshold.png', img_filtered)
 
     img_filtered = cv2.erode(img_filtered, None, iterations=3)
-    cv2.imshow("Eroded", img_filtered)
+    if DEBUG_MODE:
+        cv2.imshow("Eroded", img_filtered)
     # cv2.imwrite('Eroded.png', img_filtered)
 
     img_filtered = cv2.dilate(img_filtered, None, iterations=3)
-    cv2.imshow("Dilated", img_filtered)
+    if DEBUG_MODE:
+        cv2.imshow("Dilated", img_filtered)
     # cv2.imwrite('Dilated.png', img_filtered)
 
     # Find contours, obtain bounding box, extract and save region of interest (ROI)
@@ -215,7 +228,8 @@ if __name__ == "__main__":
             characters.append((ROI, x)) # store the horizontal position to sort them later
             cv2.imwrite('ROI_{}.png'.format(ROI_number), ROI)
             ROI_number += 1
-    cv2.imshow('Bounding boxes', img)
+    if DEBUG_MODE:
+        cv2.imshow('Bounding boxes', img)
     # cv2.imwrite('BoundingBoxes.png', img)
 
     # Sort the bounding boxes from left to right
@@ -224,10 +238,81 @@ if __name__ == "__main__":
     # print the final result with the highest confidence.
     # TODO make a list of the most likely, rather than only one. 
     final_string = ""
-    for (char, x) in sorted_characters:
-        c = compare_against_dataset(char)
-        final_string = final_string + c
-    print(final_string)
+    # for (char, x) in sorted_characters:
+    #     c = compare_against_dataset(char)
+    #     final_string = final_string + c
+    # print(final_string)
+    possibilities = []
+    for (char, _) in sorted_characters:
+        possibilities.append(compare_against_dataset(char))
+    
+    if DEBUG_MODE:
+        for char_possibilities in possibilities:
+            print(char_possibilities)
+    
+    # NUMBER_OF_RESULTS = 10
+    # for i in range(NUMBER_OF_RESULTS):
+    #     final_string = ''
+    #     difference = 1
+    #     for char_possibilities in possibilities:
+    #         best_mse = 1
+    #         best_char = '0'
+    #         for (mse, char) in char_possibilities:
+    #             if mse < best_mse:
+    #                 best_mse = mse
+    #                 best_char = char
+    #         final_string = final_string + best_char
+    #         # TODO only remove the lowest of the best (mse, char)
+    #         if(len(char_possibilities) > 1):
+    #             char_possibilities.remove((best_mse,best_char))
+
+    #     print(final_string)
+    #     # for char_possibilities in possibilities:
+    #     #     print(char_possibilities)
+
+    NUMBER_OF_RESULTS = 10
+    for i in range(NUMBER_OF_RESULTS):
+        stop_flag = False
+        final_string = ''
+        sum_confidence = 0
+        num_of_chars = 0
+        difference = 1
+        most_similar_char = (0, 'c') # (mse, character) pair
+        for char_possibilities in possibilities:
+            # Add the character of the first possibility (those are already sorted)
+            # char_possibilities is in the form [(mse, 'c'), (mse, 'c'), (mse, 'c')]
+            final_string = final_string + char_possibilities[0][1]
+            sum_confidence += (1 - char_possibilities[0][0])
+            num_of_chars += 1
+            if len(char_possibilities) > 1:
+                new_difference = char_possibilities[1][0] - char_possibilities[0][0]
+                if new_difference < difference:
+                    most_similar_char = char_possibilities[0]
+                    difference = new_difference
+        avg_confidence = sum_confidence * 100 / num_of_chars
+        print("{} (confidence: {} %)".format(final_string, format(avg_confidence, ".3f")))
+
+        # remove the (mse, char) pair that is the most similar to the next one
+        for char_possibilities in possibilities:
+            if char_possibilities[0] == most_similar_char:
+                char_possibilities.pop(0)
+                break
+        # Stop the loop if there are no more possible permutations (i.e. all characters have only 1 possibility left)
+        for char_possibilities in possibilities:
+            if len(char_possibilities) > 1:
+                stop_flag = False
+                break
+            else:
+                stop_flag = True
+        if stop_flag:
+            break
+
+        # for char_possibilities in possibilities:
+        #     print(char_possibilities)
+        # for char_possibilities in possibilities:
+        #     print(char_possibilities)
+
+
     # char_0 = compare_against_dataset(characters[0])
     # cv2.imshow('character', characters[0])
     # print("CHAR0")
