@@ -11,13 +11,12 @@ import filters as flt
 import time
 import os
 import sys
+import math
 
 
 # Settings
 IMAGE_FOLDER = "./images"
 INTENSITY_THRESHOLD = 129
-# TODO issue when scaling up
-SCALING = 0.5
 
 
 def find_limits(image):
@@ -163,13 +162,17 @@ def compare_against_dataset(image):
 
 # TODO add a debug flag
 if __name__ == "__main__":
-    DEBUG_MODE = False
-    # img_path = "./images/cfva648.jpg"
+    DEBUG_MODE = True
     img_path = "./images/cfva648.jpg"
+    # img_path = "./images/da12247.jpg"
     if len(sys.argv) > 1:
         img_path = sys.argv[1]
     img = cv2.imread(img_path)
-    img = cv2.resize(img, (0, 0), fx=SCALING, fy=SCALING)
+
+    # Scale the image up if too small, or down if too big. The image will have a fixed height, the width will be proportional.
+    FIXED_HEIGHT = 500
+    width = math.floor(FIXED_HEIGHT * img.shape[1] / img.shape[0])
+    img = cv2.resize(img, (width, FIXED_HEIGHT))
     # img_original = img.copy()
     if DEBUG_MODE:
         cv2.imshow("Original", img)
@@ -270,47 +273,48 @@ if __name__ == "__main__":
     #     # for char_possibilities in possibilities:
     #     #     print(char_possibilities)
 
-    NUMBER_OF_RESULTS = 10
-    for i in range(NUMBER_OF_RESULTS):
-        stop_flag = False
-        final_string = ''
-        sum_confidence = 0
-        num_of_chars = 0
-        difference = 1
-        most_similar_char = (0, 'c') # (mse, character) pair
-        for char_possibilities in possibilities:
-            # Add the character of the first possibility (those are already sorted)
-            # char_possibilities is in the form [(mse, 'c'), (mse, 'c'), (mse, 'c')]
-            final_string = final_string + char_possibilities[0][1]
-            sum_confidence += (1 - char_possibilities[0][0])
-            num_of_chars += 1
-            if len(char_possibilities) > 1:
-                new_difference = char_possibilities[1][0] - char_possibilities[0][0]
-                if new_difference < difference:
-                    most_similar_char = char_possibilities[0]
-                    difference = new_difference
-        avg_confidence = sum_confidence * 100 / num_of_chars
-        print("{} (confidence: {} %)".format(final_string, format(avg_confidence, ".3f")))
+    if len(possibilities) > 0:
+        NUMBER_OF_RESULTS = 10
+        for i in range(NUMBER_OF_RESULTS):
+            stop_flag = False
+            final_string = ''
+            sum_confidence = 0
+            num_of_chars = 0
+            difference = 1
+            most_similar_char = (0, 'c') # (mse, character) pair
+            for char_possibilities in possibilities:
+                # Add the character of the first possibility (those are already sorted)
+                # char_possibilities is in the form [(mse, 'c'), (mse, 'c'), (mse, 'c')]
+                final_string = final_string + char_possibilities[0][1]
+                sum_confidence += (1 - char_possibilities[0][0])
+                num_of_chars += 1
+                if len(char_possibilities) > 1:
+                    new_difference = char_possibilities[1][0] - char_possibilities[0][0]
+                    if new_difference < difference:
+                        most_similar_char = char_possibilities[0]
+                        difference = new_difference
+            avg_confidence = sum_confidence * 100 / num_of_chars
+            print("{} (confidence: {} %)".format(final_string, format(avg_confidence, ".3f")))
 
-        # remove the (mse, char) pair that is the most similar to the next one
-        for char_possibilities in possibilities:
-            if char_possibilities[0] == most_similar_char:
-                char_possibilities.pop(0)
+            # remove the (mse, char) pair that is the most similar to the next one
+            for char_possibilities in possibilities:
+                if char_possibilities[0] == most_similar_char:
+                    char_possibilities.pop(0)
+                    break
+            # Stop the loop if there are no more possible permutations (i.e. all characters have only 1 possibility left)
+            for char_possibilities in possibilities:
+                if len(char_possibilities) > 1:
+                    stop_flag = False
+                    break
+                else:
+                    stop_flag = True
+            if stop_flag:
                 break
-        # Stop the loop if there are no more possible permutations (i.e. all characters have only 1 possibility left)
-        for char_possibilities in possibilities:
-            if len(char_possibilities) > 1:
-                stop_flag = False
-                break
-            else:
-                stop_flag = True
-        if stop_flag:
-            break
 
-        # for char_possibilities in possibilities:
-        #     print(char_possibilities)
-        # for char_possibilities in possibilities:
-        #     print(char_possibilities)
+            # for char_possibilities in possibilities:
+            #     print(char_possibilities)
+            # for char_possibilities in possibilities:
+            #     print(char_possibilities)
 
 
     # char_0 = compare_against_dataset(characters[0])
