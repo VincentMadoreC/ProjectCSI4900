@@ -4,6 +4,7 @@ import cv2
 
 
 if __name__ == "__main__":
+    # img_path = "./images/bc18351.jpg"
     img_path = "./images/cfva648.jpg"
 
     # This will only work when correction the code to get the bounding boxes has been completed

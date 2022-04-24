@@ -128,15 +128,19 @@ def compare_against_dataset(img, debug_mode):
             print("Average MSE for {}: {}".format(folder, sum_mse/count))
     best_mse = 1
 
-    # Find the best (lowest) MSE and the corresponding folder
+    # Find all the characters whose MSE are lower than the confidence_threshold
     for i, (mse, folder) in enumerate(mse_list):
         if mse < best_mse:
             best_mse = mse
             best_mse_index = folder
         if mse <= CONFIDENCE_THRESHOLD:
             possibilities.append((mse, folder))
+
+    # If even the best match is not lower than the threshold, add it still to have at least one guess
+    if best_mse > CONFIDENCE_THRESHOLD:
+        possibilities.append((best_mse, best_mse_index))
     if debug_mode:
-        print("Best: {} ({})".format(best_mse_index, best_mse))
+        # print("Best: {} ({})".format(best_mse_index, best_mse))
         print("Possibilities: {}".format(possibilities))
 
     return sorted(possibilities, key=lambda x: x[0])
@@ -159,6 +163,9 @@ def ocr(img, debug_mode=False):
     if debug_mode:
         cv2.imshow("Grayscale", img_gray)
 
+    # Use this line instead of the one below it to properly identify the Alabama plate.
+    # Ideally, you would want to have a solution that works for everything
+    # img_filtered = cv2.threshold(img_gray, 110, 255, cv2.THRESH_BINARY_INV)[1] # for the Alabama plate
     img_filtered = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
     if debug_mode:
         cv2.imshow("Threshold", img_filtered)
