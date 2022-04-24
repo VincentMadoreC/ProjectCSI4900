@@ -15,8 +15,8 @@ if __name__ == "__main__":
     # Below is sample test code.
 
     # For now, correction() only works if the bounding boxes have been hardcoded
-    correction.correct("images/mycar_cropped.jpg", debug_mode=False)
+    correction.correct("images/mycar_cropped.jpg", debug_mode=True)
 
     # ocr works with any image
     img = cv2.imread(img_path)
-    ocr.ocr(img, debug_mode=False)
+    ocr.ocr(img, debug_mode=True)

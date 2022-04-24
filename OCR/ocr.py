@@ -107,7 +107,7 @@ def compare_against_dataset(img, debug_mode):
     Check which number has the best (lowest) MSE on average when compared to the image.
     '''
     # TODO maybe lower threshold more
-    CONFIDENCE_THRESHOLD = 0.15 # all matches with an MSE <= CONFIDENCE_THRESHOLD will be considered as possibilities
+    CONFIDENCE_THRESHOLD = 0.2 # all matches with an MSE <= CONFIDENCE_THRESHOLD will be considered as possibilities
     possibilities = []
     mse_list = []
     path_dataset = IMAGE_FOLDER + "/standard"
@@ -138,7 +138,7 @@ def compare_against_dataset(img, debug_mode):
     if debug_mode:
         print("Best: {} ({})".format(best_mse_index, best_mse))
         print("Possibilities: {}".format(possibilities))
-        
+
     return sorted(possibilities, key=lambda x: x[0])
 
 
@@ -156,7 +156,6 @@ def ocr(img, debug_mode=False):
     # Find the contours of the characters
     # https://stackoverflow.com/questions/21104664/extract-all-bounding-boxes-using-opencv-python
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    img_original = img_gray.copy()
     if debug_mode:
         cv2.imshow("Grayscale", img_gray)
 
@@ -217,8 +216,8 @@ def ocr(img, debug_mode=False):
     
     if len(possibilities) > 0:
         NUMBER_OF_RESULTS = 10
+        stop_flag = False
         for i in range(NUMBER_OF_RESULTS):
-            stop_flag = False
             final_string = ''
             sum_confidence = 0
             num_of_chars = 0
@@ -238,11 +237,6 @@ def ocr(img, debug_mode=False):
             avg_confidence = sum_confidence * 100 / num_of_chars
             print("{} (confidence: {} %)".format(final_string, format(avg_confidence, ".3f")))
 
-            # remove the (mse, char) pair that is the most similar to the next one
-            for char_possibilities in possibilities:
-                if char_possibilities[0] == most_similar_char:
-                    char_possibilities.pop(0)
-                    break
             # Stop the loop if there are no more possible permutations (i.e. all characters have only 1 possibility left)
             for char_possibilities in possibilities:
                 if len(char_possibilities) > 1:
@@ -250,6 +244,13 @@ def ocr(img, debug_mode=False):
                     break
                 else:
                     stop_flag = True
+
+            # remove the (mse, char) pair that is the most similar to the next one
+            for char_possibilities in possibilities:
+                if char_possibilities[0] == most_similar_char:
+                    char_possibilities.pop(0)
+                    break
+
             if stop_flag:
                 break
 
