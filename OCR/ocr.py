@@ -2,17 +2,12 @@
 import cv2
 import numpy as np
 from numpy.core.fromnumeric import shape
-import filters as flt
-import time
 import os
-import sys
 import math
 
 
 # Settings
 IMAGE_FOLDER = "./images"
-INTENSITY_THRESHOLD = 129
-
 
 def find_limits(image):
     '''
@@ -105,14 +100,14 @@ def compare_images(image1, image2):
     return mse
 
 
-def compare_against_dataset(image):
+def compare_against_dataset(img, debug_mode):
     '''
     Compare the specified image against the dataset.
     Store the average MSE for each number.
     Check which number has the best (lowest) MSE on average when compared to the image.
     '''
-    # TODO lower threshold after testing
-    CONFIDENCE_THRESHOLD = 0.2 
+    # TODO maybe lower threshold more
+    CONFIDENCE_THRESHOLD = 0.15 # all matches with an MSE <= CONFIDENCE_THRESHOLD will be considered as possibilities
     possibilities = []
     mse_list = []
     path_dataset = IMAGE_FOLDER + "/standard"
@@ -126,10 +121,11 @@ def compare_against_dataset(image):
         for example in os.listdir(path_folder):
             path_example = path_folder + "/" + example
             standard = cv2.imread(path_example, cv2.IMREAD_GRAYSCALE)
-            sum_mse += compare_images(standard, image)
+            sum_mse += compare_images(standard, img)
             count += 1
         mse_list.append((sum_mse/count, folder))
-        print("Average MSE for {}: {}".format(folder, sum_mse/count))
+        if debug_mode:
+            print("Average MSE for {}: {}".format(folder, sum_mse/count))
     best_mse = 1
 
     # Find the best (lowest) MSE and the corresponding folder
@@ -139,44 +135,41 @@ def compare_against_dataset(image):
             best_mse_index = folder
         if mse <= CONFIDENCE_THRESHOLD:
             possibilities.append((mse, folder))
-    print("Best: {} ({})".format(best_mse_index, best_mse))
-    print("Possibilities: {}".format(possibilities))
-    # return best_mse_index
+    if debug_mode:
+        print("Best: {} ({})".format(best_mse_index, best_mse))
+        print("Possibilities: {}".format(possibilities))
+        
     return sorted(possibilities, key=lambda x: x[0])
 
-# TODO add a debug flag
-if __name__ == "__main__":
-    DEBUG_MODE = True
-    img_path = "./images/cfva648.jpg"
-    # img_path = "./images/da12247.jpg"
-    if len(sys.argv) > 1:
-        img_path = sys.argv[1]
-    img = cv2.imread(img_path)
+
+def ocr(img, debug_mode=False):
+    print("Starting optical character recognition...")
+    # img = cv2.imread(img_path)
 
     # Scale the image up if too small, or down if too big. The image will have a fixed height, the width will be proportional.
     FIXED_HEIGHT = 500
     width = math.floor(FIXED_HEIGHT * img.shape[1] / img.shape[0])
     img = cv2.resize(img, (width, FIXED_HEIGHT))
-    if DEBUG_MODE:
+    if debug_mode:
         cv2.imshow("Original", img)
     
     # Find the contours of the characters
     # https://stackoverflow.com/questions/21104664/extract-all-bounding-boxes-using-opencv-python
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     img_original = img_gray.copy()
-    if DEBUG_MODE:
+    if debug_mode:
         cv2.imshow("Grayscale", img_gray)
 
     img_filtered = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
-    if DEBUG_MODE:
+    if debug_mode:
         cv2.imshow("Threshold", img_filtered)
 
     img_filtered = cv2.erode(img_filtered, None, iterations=3)
-    if DEBUG_MODE:
+    if debug_mode:
         cv2.imshow("Eroded", img_filtered)
 
     img_filtered = cv2.dilate(img_filtered, None, iterations=3)
-    if DEBUG_MODE:
+    if debug_mode:
         cv2.imshow("Dilated", img_filtered)
 
     # Find contours, obtain bounding box, extract and save region of interest (ROI)
@@ -207,7 +200,7 @@ if __name__ == "__main__":
             characters.append((ROI, x)) # store the horizontal position to sort them later
             cv2.imwrite('ROI_{}.png'.format(ROI_number), ROI)
             ROI_number += 1
-    if DEBUG_MODE:
+    if debug_mode:
         cv2.imshow('Bounding boxes', img)
 
     # Sort the bounding boxes from left to right
@@ -216,9 +209,9 @@ if __name__ == "__main__":
     final_string = ""
     possibilities = []
     for (char, _) in sorted_characters:
-        possibilities.append(compare_against_dataset(char))
+        possibilities.append(compare_against_dataset(char, debug_mode))
     
-    if DEBUG_MODE:
+    if debug_mode:
         for char_possibilities in possibilities:
             print(char_possibilities)
     
@@ -260,4 +253,5 @@ if __name__ == "__main__":
             if stop_flag:
                 break
 
+    print("OCR done.{}".format(" Press any key to continue..." if debug_mode else ""))
     cv2.waitKey(0)

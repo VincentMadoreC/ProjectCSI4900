@@ -1,48 +1,48 @@
-# https://stackoverflow.com/questions/22656698/perspective-correction-in-opencv-using-python
+# Help from https://stackoverflow.com/questions/22656698/perspective-correction-in-opencv-using-python
 
 import cv2
 import math
 import numpy as np
-import matplotlib.pyplot as plt
 
-SCALING = 0.5
-img = cv2.imread('images/mycar_cropped.jpg')
-img = cv2.resize(img, (0, 0), fx=SCALING, fy=SCALING)
-rows,cols,ch = img.shape
+# Note
+# This is a VERY SPECIFIC image. The bounding boxed have been HARDCODED
+# to show that the code works when the bounding boxes are properly identified, which is the part that is yet to be completed.
+# This will ONLY work with this image AND this scaling
+def correct(img_path, debug_mode=False):
 
-cv2.imshow("Original", img)
+    print("Starting correction{}...".format(" in debug mode " if debug_mode else ""))
+    SCALING = 0.5
+    # img = cv2.imread('images/mycar_cropped.jpg')
+    img = cv2.imread(img_path)
+    img = cv2.resize(img, (0, 0), fx=SCALING, fy=SCALING)
 
-pts1 = np.float32([[430,90],[735,224],[693,477],[410,300]])
+    if debug_mode:
+        cv2.imshow("Original", img)
 
-ratio=1.6
-cardH=math.sqrt((pts1[2][0]-pts1[1][0])*(pts1[2][0]-pts1[1][0])+(pts1[2][1]-pts1[1][1])*(pts1[2][1]-pts1[1][1]))
-cardW=ratio*cardH
-pts2 = np.float32([[pts1[0][0],pts1[0][1]], [pts1[0][0]+cardW, pts1[0][1]], [pts1[0][0]+cardW, pts1[0][1]+cardH], [pts1[0][0], pts1[0][1]+cardH]])
+    # Hardcoded coordinates of the corners
+    pts1 = np.float32([[430,90],[735,224],[693,477],[410,300]])
 
-M = cv2.getPerspectiveTransform(pts1,pts2)
+    ratio=1.6
+    img_height = math.sqrt((pts1[2][0]-pts1[1][0])*(pts1[2][0]-pts1[1][0])+(pts1[2][1]-pts1[1][1])*(pts1[2][1]-pts1[1][1]))
+    img_width = ratio*img_height
+    pts2 = np.float32([[pts1[0][0],pts1[0][1]], [pts1[0][0]+img_width, pts1[0][1]], [pts1[0][0]+img_width, pts1[0][1]+img_height], [pts1[0][0], pts1[0][1]+img_height]])
 
-offsetSize=500
-transformed = np.zeros((int(cardW+offsetSize), int(cardH+offsetSize)), dtype=np.uint8)
-dst = cv2.warpPerspective(img, M, transformed.shape)
+    M = cv2.getPerspectiveTransform(pts1,pts2)
 
-cv2.imshow("Corrected",dst)
+    offsetSize = 500
+    transformed = np.zeros((int(img_width+offsetSize), int(img_height+offsetSize)), dtype=np.uint8)
+    dst = cv2.warpPerspective(img, M, transformed.shape)
 
+    if debug_mode:
+        cv2.imshow("Corrected",dst)
 
+    cv2.line(img,(430,90),(735,224),(0,255,0), 2)
+    cv2.line(img,(735,224),(693,477),(0,255,0), 2)
+    cv2.line(img,(693,477),(410,300),(0,255,0), 2)
+    cv2.line(img,(410,300),(430,90),(0,255,0), 2)
 
-# cv2.circle(img,(430,90), 3, (255,0,255), -1) # !!!!!!!!!!!
-# cv2.circle(img,(735,224), 3, (0,0,255), -1) # !!!!!!!!!!!!!!!
-# cv2.circle(img,(410,300), 3, (0,255,255), -1) # !!!!!!!!!!!
-# cv2.circle(img,(693,477), 3, (255,0,0), -1) # !!!!!!!!!!!
+    if debug_mode:
+        cv2.imshow("Bounding box",img)
 
-cv2.line(img,(430,90),(735,224),(0,255,0), 2)
-cv2.line(img,(735,224),(693,477),(0,255,0), 2)
-cv2.line(img,(693,477),(410,300),(0,255,0), 2)
-cv2.line(img,(410,300),(430,90),(0,255,0), 2)
-
-
-cv2.imshow("Bounding box",img)
-
-cv2.waitKey(0)
-# plt.subplot(121),plt.imshow(img),plt.title('Input')
-# plt.subplot(122),plt.imshow(dst),plt.title('Output')
-# plt.show()
+    print("Correction done.{}".format(" Press any key to continue..." if debug_mode else ""))
+    cv2.waitKey(0)
