@@ -12,7 +12,7 @@ def correct(img_path, debug_mode=False):
 
     print("Starting correction{}...".format(" in debug mode " if debug_mode else ""))
     SCALING = 0.5
-    # img = cv2.imread('images/mycar_cropped.jpg')
+    # img = cv2.imread('images/perspective.jpg')
     img = cv2.imread(img_path)
     img = cv2.resize(img, (0, 0), fx=SCALING, fy=SCALING)
 
