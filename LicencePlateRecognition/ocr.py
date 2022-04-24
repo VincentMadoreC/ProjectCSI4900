@@ -197,7 +197,9 @@ def ocr(img, debug_mode=False):
             cv2.rectangle(img, (x, y), (x + w, y + h), (0,255,0), 2)
             ROI = img_filtered[y:y+h, x:x+w]
             characters.append((ROI, x)) # store the horizontal position to sort them later
-            cv2.imwrite('ROI_{}.png'.format(ROI_number), ROI)
+
+            # !!! enable this line to create new images to use as standards
+            # cv2.imwrite('ROI_{}.png'.format(ROI_number), ROI)
             ROI_number += 1
     if debug_mode:
         cv2.imshow('Bounding boxes', img)
