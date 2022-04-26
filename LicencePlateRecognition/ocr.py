@@ -165,8 +165,8 @@ def ocr(img, debug_mode=False):
 
     # Use this line instead of the one below it to properly identify the Alabama plate.
     # Ideally, you would want to have a solution that works for everything
-    # img_filtered = cv2.threshold(img_gray, 110, 255, cv2.THRESH_BINARY_INV)[1] # for the Alabama plate
-    img_filtered = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
+    img_filtered = cv2.threshold(img_gray, 110, 255, cv2.THRESH_BINARY_INV)[1] # for the Alabama plate
+    # img_filtered = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
     if debug_mode:
         cv2.imshow("Threshold", img_filtered)
 
