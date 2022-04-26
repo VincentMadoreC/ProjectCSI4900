@@ -1,9 +1,10 @@
 import correction
 import ocr
 import cv2
+import argparse
 
 
-if __name__ == "__main__":
+def main():
     # img_path = "./images/bc18351.jpg"
     img_path = "./images/cfva648.jpg"
 
@@ -21,3 +22,7 @@ if __name__ == "__main__":
     # ocr works with any image
     img = cv2.imread(img_path)
     ocr.ocr(img, debug_mode=True)
+
+
+if __name__ == "__main__":
+    main()
