@@ -1,4 +1,5 @@
 # LicensePlateRecognition
+
 ## Installation
 1. Clone the repository
 2. Install Python if you haven't done so already
@@ -13,7 +14,6 @@ Or use the command line:
 ```
 ProjectCSI4900\LicencePlateRecognition> python main.py ./images/cvfa648.jpg --debug
 ```
-
 ### Manual tuning
 In order to properly detect the Alabama plate (bc18351.jpg), search for the comment "for the Alabama plate" then enable the corresponding line, and disable the line below. Also, make sure to provide the bc18351.jpg image.
 
